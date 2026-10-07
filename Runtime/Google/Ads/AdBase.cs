@@ -1,6 +1,6 @@
 #if GOOGLE_MOBILE
 
-namespace ACore.Google
+namespace Moimo.Google
 {
     public class AdBase
     {

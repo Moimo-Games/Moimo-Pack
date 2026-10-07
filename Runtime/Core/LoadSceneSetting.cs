@@ -1,6 +1,6 @@
 using System;
 
-namespace ACore
+namespace Moimo.Core
 {
     public class LoadSceneSetting
     {

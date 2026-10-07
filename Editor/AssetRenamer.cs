@@ -5,14 +5,14 @@ using UnityEngine;
 using Sirenix.OdinInspector;
 using Sirenix.OdinInspector.Editor;
 
-namespace ACore
+namespace Moimo.Editor
 {
-    public class AssetRenamerOdin : OdinEditorWindow
+    public class AssetRenamer : OdinEditorWindow
 {
-    [MenuItem("Tools/ACore/Asset Rename")]
+    [MenuItem("Tools/Moimo/Asset Rename")]
     private static void Open()
     {
-        GetWindow<AssetRenamerOdin>().Show();
+        GetWindow<AssetRenamer>().Show();
     }
 
     [BoxGroup("Rename Settings")]

@@ -1,9 +1,10 @@
 using System.Collections;
 using System;
+using Moimo.Modules;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace ACore
+namespace Moimo.Core
 {
     public static class SCENE
     {
@@ -21,6 +22,12 @@ namespace ACore
         public static void Restart(LoadSceneSetting setting = null)
         {
             Load(Current, setting);
+        }
+        
+        public static void RestartWithFade()
+        {
+            var _setting = new LoadSceneSetting();
+            LoadWithFade(Current, _setting);
         }
         
         public static void Restart(Action onComplete)

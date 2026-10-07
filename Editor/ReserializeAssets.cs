@@ -1,11 +1,11 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace ACore
+namespace Moimo.Editor
 {
     public class ReserializeAssets : MonoBehaviour
     {
-        [MenuItem("Tools/ACore/Refresh Assets")]
+        [MenuItem("Tools/Moimo/Refresh Assets")]
         public static void ReserializeAll()
         {
             var _allAssetPaths = AssetDatabase.GetAllAssetPaths();

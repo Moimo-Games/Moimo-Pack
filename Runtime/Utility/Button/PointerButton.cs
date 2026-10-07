@@ -3,7 +3,7 @@ using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace ACore
+namespace Moimo.Utility
 {
     [AddComponentMenu("Event/Pointer Button")]
     [RequireComponent(typeof(Button))]

@@ -2,16 +2,18 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Sirenix.OdinInspector;
 using Sirenix.OdinInspector.Editor;
 using Sirenix.Utilities;
 using Sirenix.Utilities.Editor;
 using UnityEditor;
 using UnityEngine;
+using Pose = Moimo.Field.Pose;
 
-namespace ACore.Tool
+namespace Moimo.Attribute
 {
-    public class PickFromSceneAttributeDrawerPose : OdinValueDrawer<Pose>
+    public class PickFromSceneAttributeDrawerPose : OdinAttributeDrawer<PickFromSceneAttribute, Pose>
     {
         private static readonly List<PickFromSceneAttributeDrawerPose> ActiveDrawers = new List<PickFromSceneAttributeDrawerPose>();
         private static bool sceneGuiRegistered;
@@ -20,19 +22,74 @@ namespace ACore.Tool
         private Pose current;
         private GUIStyle buttonStyle;
         private bool showHandles;
-        private double lastDrawnTime;
         private bool isDragging;
         private bool registered;
+        private bool showToggle;
+        private Color handleColor = Color.white;
+        private int drawnForUpdateId = -1;
 
         protected override void Initialize()
         {
             label = Property.NiceName.ToTitleCase();
             current = ValueEntry.SmartValue;
-            showHandles = false;
             isDragging = false;
-            lastDrawnTime = EditorApplication.timeSinceStartup;
             buttonStyle = new GUIStyle(GUI.skin.button);
+            drawnForUpdateId = -1;
+
+            showToggle = Attribute.ShowToggle;
+            showHandles = Attribute.DefaultShowHandles;
+            handleColor = ParseColor(Attribute.HandleColor);
+            if (!string.IsNullOrEmpty(Attribute.Label))
+                label = Attribute.Label;
+            else
+                label = ShortPath(Property.Path);
+
             RegisterDrawer();
+        }
+
+        private static string ShortPath(string path)
+        {
+            if (string.IsNullOrEmpty(path)) return path;
+            var parts = path.Replace("$", "").Split('.');
+            var filtered = parts
+                .Where(p => !string.IsNullOrEmpty(p) && !p.StartsWith("#") && !p.StartsWith("{"))
+                .ToList();
+            if (filtered.Count > 4)
+                filtered = filtered.Skip(filtered.Count - 4).ToList();
+            return string.Join(".", filtered);
+        }
+
+        private static Color ParseColor(string colorStr)
+        {
+            if (string.IsNullOrEmpty(colorStr)) return Color.white;
+
+            if (!colorStr.StartsWith("#") && (colorStr.Length == 6 || colorStr.Length == 8))
+            {
+                if (ColorUtility.TryParseHtmlString("#" + colorStr, out var hexNoHash))
+                    return hexNoHash;
+            }
+
+            if (ColorUtility.TryParseHtmlString(colorStr, out var hex))
+                return hex;
+
+            switch (colorStr.ToLowerInvariant())
+            {
+                case "red": return Color.red;
+                case "green": return Color.green;
+                case "blue": return Color.blue;
+                case "yellow": return Color.yellow;
+                case "cyan": return Color.cyan;
+                case "magenta": return Color.magenta;
+                case "white": return Color.white;
+                case "black": return Color.black;
+                case "gray":
+                case "grey": return Color.gray;
+                case "orange": return new Color(1f, 0.5f, 0f);
+                case "purple": return new Color(0.5f, 0f, 0.5f);
+                case "clear":
+                case "transparent": return Color.clear;
+                default: return Color.white;
+            }
         }
 
         private void RegisterDrawer()
@@ -114,6 +171,33 @@ namespace ACore.Tool
             }
         }
 
+        private bool IsVisibleInInspector()
+        {
+            try
+            {
+                if (Property == null || Property.Tree == null)
+                    return false;
+
+                for (var p = Property.Parent; p != null; p = p.Parent)
+                {
+                    if (p.State == null)
+                        continue;
+
+                    bool isFoldout = p.GetAttribute<FoldoutGroupAttribute>() != null;
+                    bool isCollection = p.ChildResolver is ICollectionResolver;
+
+                    if ((isFoldout || isCollection) && !p.State.Expanded)
+                        return false;
+                }
+
+                return drawnForUpdateId == Property.Tree.UpdateID;
+            }
+            catch
+            {
+                return true;
+            }
+        }
+
         private void DrawSceneHandles()
         {
             if (!showHandles)
@@ -122,10 +206,8 @@ namespace ACore.Tool
                 return;
             }
 
-            if (!isDragging && EditorApplication.timeSinceStartup - lastDrawnTime > 1.0)
+            if (!isDragging && !IsVisibleInInspector())
             {
-                showHandles = false;
-                isDragging = false;
                 return;
             }
 
@@ -138,7 +220,6 @@ namespace ACore.Tool
             if (EditorGUI.EndChangeCheck())
             {
                 isDragging = true;
-                lastDrawnTime = EditorApplication.timeSinceStartup;
                 pose.position = position;
                 pose.rotation = rotation;
                 ValueEntry.SmartValue = pose;
@@ -157,7 +238,7 @@ namespace ACore.Tool
         protected override void DrawPropertyLayout(GUIContent content)
         {
             if (!registered) RegisterDrawer();
-            lastDrawnTime = EditorApplication.timeSinceStartup;
+            try { drawnForUpdateId = Property.Tree.UpdateID; } catch { drawnForUpdateId = -1; }
 
             var pose = ValueEntry.SmartValue;
 
@@ -176,12 +257,14 @@ namespace ACore.Tool
             if (SirenixEditorGUI.IconButton(EditorIcons.MagnifyingGlass, buttonStyle))
                 SetFramePosition(pose.position);
 
-            if (SirenixEditorGUI.IconButton(showHandles ? EditorIcons.Checkmark : EditorIcons.X, buttonStyle))
+            if (showToggle)
             {
-                showHandles = !showHandles;
-                isDragging = false;
-                lastDrawnTime = EditorApplication.timeSinceStartup;
-                SceneView.RepaintAll();
+                if (SirenixEditorGUI.IconButton(showHandles ? EditorIcons.Checkmark : EditorIcons.X, buttonStyle))
+                {
+                    showHandles = !showHandles;
+                    isDragging = false;
+                    SceneView.RepaintAll();
+                }
             }
 
             GUILayout.EndVertical();
@@ -199,13 +282,14 @@ namespace ACore.Tool
         private void DrawVisual(Pose pose)
         {
             var size = HandleUtility.GetHandleSize(pose.position) * 0.8f;
-            Handles.color = Color.green;
+            Handles.color = handleColor;
             Handles.ArrowHandleCap(0, pose.position, pose.rotation, size, EventType.Repaint);
 
             var cam = SceneView.lastActiveSceneView != null ? SceneView.lastActiveSceneView.camera : null;
             if (cam == null) return;
             var offset = -cam.transform.up * HandleUtility.GetHandleSize(pose.position) * 0.2f;
-            Handles.Label(pose.position + offset, label, buttonStyle);
+            var drawLabel = string.IsNullOrEmpty(Attribute.Label) ? label : Attribute.Label;
+            Handles.Label(pose.position + offset, drawLabel, buttonStyle);
         }
 
         private void SetPositionToCurrentSceneViewFrame()
@@ -216,7 +300,6 @@ namespace ACore.Tool
             pose.rotation = SceneView.lastActiveSceneView.camera.transform.rotation;
             ValueEntry.SmartValue = pose;
             current = pose;
-            lastDrawnTime = EditorApplication.timeSinceStartup;
             SceneView.RepaintAll();
             ValueEntry.ApplyChanges();
         }

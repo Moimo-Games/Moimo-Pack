@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace ACore
+namespace Moimo.Utility
 {
     public static class InputUtility
     {

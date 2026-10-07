@@ -4,10 +4,12 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using GooglePlayGames;
+using Moimo.Core;
+using Moimo.Utility;
 using UnityEngine;
 
 
-namespace ACore.Google
+namespace Moimo.Google
 {
     public class PlayGamesManager : GlobalBehaviour
     { 
@@ -15,9 +17,10 @@ namespace ACore.Google
         public event Action OnInitialize;
         private Dictionary<Type, PlayGamesBase> instances = new();
 
+        [Obsolete("Obsolete")]
         public override IEnumerator InitializeCoroutine()
         {
-            if (!GAME.GetSO<ASetting>().isGooglePlay) yield break;
+            if (!GAME.GetSO<PackSetting>().isGoogle) yield break;
             PlayGamesPlatform.Activate();
             
             var _isCompleted = false;

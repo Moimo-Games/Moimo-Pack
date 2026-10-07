@@ -4,9 +4,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using GoogleMobileAds.Api;
+using Moimo.Core;
+using Moimo.Utility;
 using UnityEngine;
 
-namespace ACore.Google
+namespace Moimo.Google
 {
     public class AdManager : GlobalBehaviour
     {
@@ -15,9 +17,9 @@ namespace ACore.Google
         
         public override IEnumerator InitializeCoroutine()
         {
-            var _setting = GAME.GetSO<ASetting>();
-            if (!_setting.isGooglePlay) yield break;
-            if (_setting.googlePlay.noAds) yield break;
+            var _setting = GAME.GetSO<PackSetting>();
+            if (!_setting.isGoogle) yield break;
+            if (_setting.google.noAds) yield break;
             
             var _isCompleted = false;
             MobileAds.Initialize(_=> 

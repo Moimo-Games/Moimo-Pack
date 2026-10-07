@@ -1,10 +1,10 @@
 using System;
 using System.Collections;
-using System.IO;
+using Moimo.Modules;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace ACore
+namespace Moimo.Core
 {
     [DefaultExecutionOrder(-1000)]
     public class GameManager : MonoBehaviour
@@ -37,10 +37,10 @@ namespace ACore
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void OnPlay()
         {
-            Debug.Log($"{nameof(ACore)}: Play");
+            Debug.Log($"{nameof(Moimo)}: Play");
             if (SceneManager.GetActiveScene().buildIndex != 0)
             {
-                Debug.Log($"{nameof(ACore)}: Create Manager");
+                Debug.Log($"{nameof(Moimo)}: Create Manager");
                 Instantiate(Resources.Load<GameManager>("GameManager"));
             }
         }
@@ -58,7 +58,7 @@ namespace ACore
 
         private IEnumerator Initialize()
         {
-            Debug.Log($"[{nameof(ACore)}] Start Booting...");
+            Debug.Log($"[{nameof(Moimo)}] Start Booting...");
             
             DontDestroyOnLoad(gameObject);
             GAME.Manager = this;
@@ -66,12 +66,12 @@ namespace ACore
             OBJECT.Initialize();
             STORAGE.Initialize();
 
-            if (OBJECT.TryShow<BootingPopup>(out var _popup))
+            if (OBJECT.TryShow<LauncherPopup>(out var _popup))
                 yield return GAME.Initialize(_popup.Setup);
             else
                 yield return GAME.Initialize();
 
-            var _setting = GAME.GetSO<ASetting>();
+            var _setting = GAME.GetSO<PackSetting>();
             yield return _setting.FirstScene();
 
             if (_popup != null)
@@ -79,7 +79,7 @@ namespace ACore
                 _popup.Remove();
             }
             
-            Debug.Log($"[{nameof(ACore)}] Booting Completed");
+            Debug.Log($"[{nameof(Moimo)}] Booting Completed");
         }
 
         private void OnApplicationPause(bool pauseStatus)

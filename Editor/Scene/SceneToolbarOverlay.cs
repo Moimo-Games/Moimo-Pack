@@ -8,7 +8,7 @@ using UnityEditor.Toolbars;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace ACore.Tool
+namespace Moimo.Editor
 {
     [Overlay(typeof(SceneView), "Scene", true)]
     public class SceneToolbarOverlay : ToolbarOverlay{

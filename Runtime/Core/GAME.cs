@@ -2,10 +2,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Moimo.Utility;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace ACore
+namespace Moimo.Core
 {
     public static class GAME
     {
@@ -103,6 +104,7 @@ namespace ACore
             locals.Clear();
         }
 
+        [Obsolete("Obsolete")]
         public static bool TryGet<T>(out T behaviour) where T : class, IBehaviour
         {
             if (typeof(GlobalBehaviour).IsAssignableFrom(typeof(T)))

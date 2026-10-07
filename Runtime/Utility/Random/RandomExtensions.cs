@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Random = UnityEngine.Random;
 
-namespace ACore
+namespace Moimo.Utility
 {
     public static class RandomExtensions
     {

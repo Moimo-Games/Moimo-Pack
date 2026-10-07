@@ -1,9 +1,10 @@
 using System;
+using Moimo.Utility;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace ACore.Animation
+namespace Moimo.Animation
 {
     public class ColorThis : AnimationTimeBase
     {

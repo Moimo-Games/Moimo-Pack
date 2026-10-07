@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace ACore
+namespace Moimo.Utility
 {
     public static class StringExtensions
     {

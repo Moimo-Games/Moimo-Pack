@@ -1,6 +1,6 @@
 using System;
 
-namespace ACore
+namespace Moimo.Utility
 {
     public static class ArrayExtensions
     {

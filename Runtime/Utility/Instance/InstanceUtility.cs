@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace ACore
+namespace Moimo.Utility
 {
     public static class InstanceUtility
     {
@@ -14,7 +14,7 @@ namespace ACore
             var _allowedAssemblies = AppDomain.CurrentDomain.GetAssemblies()
                 .Where(a =>
                     a.FullName.Contains("Assembly-CSharp") ||
-                    a.FullName.Contains(nameof(ACore))
+                    a.FullName.Contains(nameof(Moimo))
                 ).ToArray();
             
             var _derivedTypes = _allowedAssemblies

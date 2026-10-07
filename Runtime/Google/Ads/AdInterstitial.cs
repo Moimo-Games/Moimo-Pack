@@ -1,9 +1,10 @@
 #if GOOGLE_MOBILE
 
 using GoogleMobileAds.Api;
+using Moimo.Core;
 using UnityEngine;
 
-namespace ACore.Google
+namespace Moimo.Google
 {
     public class AdInterstitial : AdBase
     {
@@ -17,7 +18,7 @@ namespace ACore.Google
         {
             var _adRequest = new AdRequest();
 
-            var _setting = GAME.GetSO<ASetting>().googlePlay;
+            var _setting = GAME.GetSO<PackSetting>().google;
             InterstitialAd.Load(_setting.interstitialID, _adRequest,
                 (ad, error) =>
                 {

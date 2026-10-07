@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace ACore.Animation
+namespace Moimo.Animation
 {
     public class AnimationTimeBase : AnimationBase
     {

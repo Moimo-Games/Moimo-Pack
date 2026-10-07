@@ -1,7 +1,7 @@
 using System;
 using Sirenix.OdinInspector;
 
-namespace ACore
+namespace Moimo.Utility
 {
     [Serializable, InlineProperty]
     public struct IntRange

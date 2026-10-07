@@ -2,9 +2,11 @@
 
 using System.Collections;
 using GoogleMobileAds.Api;
+using Moimo.Core;
+using Moimo.Modules;
 using UnityEngine;
 
-namespace ACore.Google
+namespace Moimo.Google
 {
     public class AdBanner : AdBase
     {
@@ -13,7 +15,7 @@ namespace ACore.Google
 
         public override void Initialize()
         {
-            var _setting = GAME.GetSO<ASetting>().googlePlay;
+            var _setting = GAME.GetSO<PackSetting>().google;
             if (_setting.noBanner) return;
             
             Request(checkConnection: false);
@@ -61,7 +63,7 @@ namespace ACore.Google
             
             if (!checkConnection || await NETWORK.IsConnection())
             {
-                var _setting = GAME.GetSO<ASetting>().googlePlay;
+                var _setting = GAME.GetSO<PackSetting>().google;
                 data = new BannerView(_setting.bannerID, AdSize.Banner, AdPosition.Top);
                 data.OnBannerAdLoaded += BannerAdLoaded;
             

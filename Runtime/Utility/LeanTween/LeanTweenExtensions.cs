@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System;
 
-namespace ACore
+namespace Moimo.Utility
 {
     public static class LeanTweenExtensions
     {

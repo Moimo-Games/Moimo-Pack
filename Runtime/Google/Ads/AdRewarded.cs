@@ -3,9 +3,11 @@
 using System;
 using System.Collections;
 using GoogleMobileAds.Api;
+using Moimo.Core;
+using Moimo.Modules;
 using UnityEngine;
 
-namespace ACore.Google
+namespace Moimo.Google
 {
     public class AdRewarded : AdBase
     {
@@ -26,7 +28,7 @@ namespace ACore.Google
         {
             var request = new AdRequest();
 
-            var setting = GAME.GetSO<ASetting>().googlePlay;
+            var setting = GAME.GetSO<PackSetting>().google;
             RewardedAd.Load(setting.rewardedID, request, (ad, error) =>
             {
                 if (error != null || ad == null)

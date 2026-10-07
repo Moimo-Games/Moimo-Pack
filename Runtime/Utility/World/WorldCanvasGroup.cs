@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace ACore
+namespace Moimo.Utility
 {
     [DisallowMultipleComponent]
     public class WorldCanvasGroup : MonoBehaviour

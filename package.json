@@ -1,14 +1,15 @@
 {
-  "name": "com.agung.acore",
-  "version": "1.5.1",
-  "displayName": "ACore",
+  "name": "com.moimogames.moimopack",
+  "version": "1.6.1",
+  "displayName": "Moimo Pack",
   "dependencies": {
     "com.unity.nuget.newtonsoft-json": "3.2.1"
   },
   "unity": "2022.3",
   "author": {
-    "name": "Agung Gunawan",
-    "url": "https://github.com/Agung772"
+    "name": "Moimo Games",
+    "url": "https://github.com/Moimo-Games/Moimo-Pack"
   },
-  "description": "Masih tahap beta hehe"
+  "description": "Masih tahap beta hehe",
+  "hideInEditor": false
 }

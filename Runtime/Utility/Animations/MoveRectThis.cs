@@ -1,8 +1,9 @@
 using System;
+using Moimo.Attribute;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
-namespace ACore.Animation
+namespace Moimo.Animation
 {
     public class MoveRectThis : AnimationTimeBase
     {

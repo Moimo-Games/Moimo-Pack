@@ -1,23 +1,27 @@
 #if GOOGLE_MOBILE
 
+using System;
 using System.Threading.Tasks;
 using GooglePlayGames;
 using GooglePlayGames.BasicApi;
+using Moimo.Core;
 using UnityEngine;
 
-namespace ACore.Google
+namespace Moimo.Google
 {
     public class PlayGamesLeaderboard : PlayGamesBase
     {
+        [Obsolete("Obsolete")]
         public void ReportScore(long skor)
         {
-            var _setting = GAME.GetSO<ASetting>().googlePlay;
+            var _setting = GAME.GetSO<PackSetting>().google;
             Social.ReportScore(skor, _setting.leaderboardID, success =>
             {
                 Debug.Log(success ? "Skor terkirim" : "Gagal kirim skor");
             });
         }
         
+        [Obsolete("Obsolete")]
         public void Show()
         {
             Social.ShowLeaderboardUI();
@@ -27,7 +31,7 @@ namespace ACore.Google
         {
             var _tcs = new TaskCompletionSource<long>();
 
-            var _setting = GAME.GetSO<ASetting>().googlePlay;
+            var _setting = GAME.GetSO<PackSetting>().google;
             PlayGamesPlatform.Instance.LoadScores(
                 _setting.leaderboardID,
                 LeaderboardStart.PlayerCentered,

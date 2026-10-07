@@ -2,7 +2,7 @@ using System;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
-namespace ACore.Animation
+namespace Moimo.Animation
 {
     public class RotateThis : AnimationTimeBase
     {

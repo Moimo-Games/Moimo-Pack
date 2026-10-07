@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using UnityEngine.Networking;
 
-namespace ACore
+namespace Moimo.Utility
 {
     public static class TaskExtensions
     {

@@ -2,7 +2,7 @@ using System;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
-namespace ACore
+namespace Moimo.Utility
 {
     [Serializable, InlineProperty]
     public struct Vector3Range

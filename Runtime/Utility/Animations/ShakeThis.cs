@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-namespace ACore.Animation
+namespace Moimo.Animation
 {
     public class ShakeThis : AnimationBase
     {

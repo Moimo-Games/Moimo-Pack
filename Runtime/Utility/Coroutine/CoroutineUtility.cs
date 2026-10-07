@@ -1,9 +1,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Moimo.Core;
 using UnityEngine;
 
-namespace ACore
+namespace Moimo.Utility
 {
     public static partial class CoroutineUtility
     {

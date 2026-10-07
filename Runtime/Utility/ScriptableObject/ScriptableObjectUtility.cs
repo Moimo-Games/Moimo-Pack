@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace ACore
+namespace Moimo.Utility
 {
     public static class ScriptableObjectUtility
     {

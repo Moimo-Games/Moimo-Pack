@@ -4,7 +4,7 @@ using Sirenix.OdinInspector.Editor;
 using UnityEditor;
 using UnityEngine;
 
-namespace ACore.Editor
+namespace Moimo.Editor
 {
     public class FormatAssetTool : OdinEditorWindow
     {
@@ -99,7 +99,7 @@ namespace ACore.Editor
 
         private bool ShowFolderField() => !processAllAssets;
 
-        [MenuItem("Tools/ACore/Texture 2D Converted")]
+        [MenuItem("Tools/Moimo/Texture 2D Converted")]
         private static void OpenWindow()
         {
             GetWindow<FormatAssetTool>().Show();

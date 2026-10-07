@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace ACore
+namespace Moimo.Utility
 {
     public static class ClipboardExtension
     {

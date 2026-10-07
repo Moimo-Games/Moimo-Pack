@@ -1,7 +1,7 @@
 using System;
 using Sirenix.OdinInspector;
 
-namespace ACore.Animation
+namespace Moimo.Animation
 {
     [Serializable, InlineProperty]
     public class AnimationGroup

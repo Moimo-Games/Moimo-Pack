@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace ACore
+namespace Moimo
 {
     public static class TransformExtensions
     {

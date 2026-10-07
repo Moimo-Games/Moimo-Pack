@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace ACore.Animation
+namespace Moimo.Animation
 {
     [ExecuteAlways]
     public class AllColorThis : AnimationTimeBase
@@ -37,8 +37,9 @@ namespace ACore.Animation
             }
         }
 
-        private void OnEnable()
+        protected override void OnEnable()
         {
+            base.OnEnable();
             CacheTargets();
 
             if (!Application.isPlaying)
