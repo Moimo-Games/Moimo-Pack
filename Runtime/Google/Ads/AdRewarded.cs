@@ -28,7 +28,7 @@ namespace Moimo.Google
         {
             var request = new AdRequest();
 
-            var setting = GAME.GetSO<PackSetting>().google;
+            var setting = SO.Get<PackSetting>().google;
             RewardedAd.Load(setting.rewardedID, request, (ad, error) =>
             {
                 if (error != null || ad == null)

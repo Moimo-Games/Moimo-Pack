@@ -1,5 +1,7 @@
-using Moimo.Core;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
+using Moimo.Core;
 
 namespace Moimo.Modules
 {
@@ -7,6 +9,9 @@ namespace Moimo.Modules
     {
         public AudioSource BGMSource { get; private set; }
         public AudioSource SFXSource { get; private set; }
+        
+        public AssetReferenceT<AudioClip> CurrentBGM { get; set; }
+        public AsyncOperationHandle<AudioClip> BGMHandle { get; set; }
 
         public override void Initialize()
         {

@@ -23,6 +23,7 @@ namespace Moimo
         public GoogleSetting google;
         
         [TabGroup("Moimo","Supabase")] public bool isSupabase;
+        [TabGroup("Moimo","Supabase"), ShowIf(nameof(isSupabase))] public bool autoLogin = true;
         [TabGroup("Moimo","Supabase"), ShowIf(nameof(isSupabase)), HideLabel] 
         public SupabaseSetting supabase;
 

@@ -18,7 +18,7 @@ namespace Moimo.Google
         {
             var _adRequest = new AdRequest();
 
-            var _setting = GAME.GetSO<PackSetting>().google;
+            var _setting = SO.Get<PackSetting>().google;
             InterstitialAd.Load(_setting.interstitialID, _adRequest,
                 (ad, error) =>
                 {

@@ -17,7 +17,7 @@ namespace Moimo.Google
         
         public override IEnumerator InitializeCoroutine()
         {
-            var _setting = GAME.GetSO<PackSetting>();
+            var _setting = SO.Get<PackSetting>();
             if (!_setting.isGoogle) yield break;
             if (_setting.google.noAds) yield break;
             

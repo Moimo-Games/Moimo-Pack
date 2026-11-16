@@ -14,7 +14,7 @@ namespace Moimo.Google
         [Obsolete("Obsolete")]
         public void ReportScore(long skor)
         {
-            var _setting = GAME.GetSO<PackSetting>().google;
+            var _setting = SO.Get<PackSetting>().google;
             Social.ReportScore(skor, _setting.leaderboardID, success =>
             {
                 Debug.Log(success ? "Skor terkirim" : "Gagal kirim skor");
@@ -31,7 +31,7 @@ namespace Moimo.Google
         {
             var _tcs = new TaskCompletionSource<long>();
 
-            var _setting = GAME.GetSO<PackSetting>().google;
+            var _setting = SO.Get<PackSetting>().google;
             PlayGamesPlatform.Instance.LoadScores(
                 _setting.leaderboardID,
                 LeaderboardStart.PlayerCentered,

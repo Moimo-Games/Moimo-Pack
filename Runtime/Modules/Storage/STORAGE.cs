@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using Moimo.Cloud;
 using Moimo.Core;
@@ -9,17 +10,22 @@ namespace Moimo.Modules
     {
         private const string FileName = "Save.json";
         private static string pathFile => Path.Combine(Application.persistentDataPath, FileName);
+        private static string pathTemp => Path.Combine(Application.persistentDataPath, "Save.tmp");
+        private static string pathBackup => Path.Combine(Application.persistentDataPath, "Save.bak");
         private static GameData data = new();
         private static bool autoSave = true;
+        private static readonly object saveLock = new();
+        private static bool loadedFromDisk;
 
         public static T Get<T>() where T : BaseStorage, new() => data.Get<T>();
         public static string GetJson() => data.GetJson();
         public static void SetJson(string json) => data.SetJson(json);
+        public static bool LoadedFromDisk => loadedFromDisk;
 
         public static void Initialize()
         {
             Load();
-            if (GAME.TryGetSO<PackSetting>(out var _so))
+            if (SO.TryGet<PackSetting>(out var _so))
             {
                 autoSave = _so.autoSave;
             }
@@ -28,16 +34,49 @@ namespace Moimo.Modules
 
         private static void Load()
         {
-            if (File.Exists(pathFile))
+            loadedFromDisk = false;
+
+            if (TryLoadFromFile(pathFile))
             {
-                var _json = File.ReadAllBytes(pathFile);
-                var _decrypt = Encryption.Decrypt(_json);
-                data.SetJson(_decrypt);
+                loadedFromDisk = true;
+                return;
             }
-            else
+
+            if (TryLoadFromFile(pathBackup))
             {
-                Debug.LogWarning("[Storage] local game data not found");
-                data.New();
+                loadedFromDisk = true;
+                Debug.LogWarning("[Storage] Loaded game data from backup");
+                PersistLocalInternal();
+                return;
+            }
+
+            Debug.LogWarning("[Storage] local game data not found");
+            data.New();
+        }
+
+        private static bool TryLoadFromFile(string path)
+        {
+            if (!File.Exists(path))
+                return false;
+
+            try
+            {
+                var _bytes = File.ReadAllBytes(path);
+                if (_bytes == null || _bytes.Length == 0)
+                    return false;
+
+                var _decrypt = Encryption.Decrypt(_bytes);
+                if (string.IsNullOrEmpty(_decrypt))
+                    return false;
+
+                data.SetJson(_decrypt);
+                Debug.Log("[Storage] Local game data loaded");
+                return true;
+            }
+            catch (Exception _e)
+            {
+                Debug.LogWarning($"[Storage] Failed to load from {path}: {_e.Message}");
+                return false;
             }
         }
 
@@ -45,22 +84,85 @@ namespace Moimo.Modules
         {
             if (data == null) return;
 
-            data.Save();
+            SaveLocal();
+            SaveCloud();
+        }
 
-            var _json = data.GetJson();
-            var _encrypt = Encryption.Encrypt(_json);
-            File.WriteAllBytes(pathFile, _encrypt);
+        public static void SaveLocal()
+        {
+            if (data == null) return;
 
-#if UNITY_EDITOR
-            var _pathEditorSave = Path.Combine(Application.persistentDataPath, pathFile.Replace(".", "Editor."));
-            File.WriteAllText(_pathEditorSave, _json);
-#endif
+            lock (saveLock)
+            {
+                data.Save();
+                PersistLocalInternal();
+            }
 
 #if SUPABASE
-            SupabaseManager.SaveData();
+            SupabaseManager.MarkDirty();
 #endif
-            Debug.Log($"[Storage] Saving local game data \n" +
-                      $"Path : {pathFile}");
+
+            Debug.Log($"[Storage] Saving local game data\nPath : {pathFile}");
+        }
+
+        public static void SaveCloud()
+        {
+#if SUPABASE
+            SupabaseManager.SaveCloud();
+#endif
+        }
+
+        public static void SaveCloudIfDirty()
+        {
+#if SUPABASE
+            SupabaseManager.SaveCloudIfDirty();
+#endif
+        }
+
+        public static void PersistLocal()
+        {
+            if (data == null) return;
+            lock (saveLock)
+            {
+                PersistLocalInternal();
+            }
+        }
+
+        private static void PersistLocalInternal()
+        {
+            try
+            {
+                var _json = data.GetJson();
+                var _encrypt = Encryption.Encrypt(_json);
+
+                File.WriteAllBytes(pathTemp, _encrypt);
+
+                if (File.Exists(pathFile))
+                {
+                    File.Replace(pathTemp, pathFile, pathBackup);
+                }
+                else
+                {
+                    File.Move(pathTemp, pathFile);
+                }
+
+#if UNITY_EDITOR
+                var _pathEditorSave = Path.Combine(Application.persistentDataPath, pathFile.Replace(".", "Editor."));
+                File.WriteAllText(_pathEditorSave, _json);
+#endif
+            }
+            catch (Exception _e)
+            {
+                Debug.LogError($"[Storage] Failed to persist local game data: {_e.Message}");
+                try
+                {
+                    if (File.Exists(pathTemp))
+                        File.Delete(pathTemp);
+                }
+                catch
+                {
+                }
+            }
         }
 
         public static void TrySave()
@@ -71,27 +173,146 @@ namespace Moimo.Modules
             }
         }
 
-        public static bool TryReplace(string json)
+        public static DateTime GetLocalLastSave()
         {
-            if (string.IsNullOrEmpty(json)) return false;
+            if (data == null)
+                return default;
 
-            var _newStorages = new GameData();
-            _newStorages.SetJson(json);
-            return TryReplace(_newStorages);
+            return data.Get<MetaStorage>().lastSave;
         }
 
-        public static bool TryReplace(GameData newData)
+        public static bool IsLocalBlank()
         {
-            if (newData == null) return false;
+            if (data == null)
+                return true;
 
-            if (newData.Get<MetaStorage>().lastSave > data.Get<MetaStorage>().lastSave)
+            if (loadedFromDisk)
+                return false;
+
+            return data.Get<MetaStorage>().lastSave == default;
+        }
+
+        public static bool IsValidCloudJson(string json)
+        {
+            if (string.IsNullOrEmpty(json))
+                return false;
+
+            var _trim = json.TrimStart();
+            return _trim.Length > 0 && (_trim[0] == '{' || _trim[0] == '[');
+        }
+
+        public static bool TryGetCloudForceVersion(string json, out int forceVersion)
+        {
+            forceVersion = 1;
+
+            if (!IsValidCloudJson(json))
+                return false;
+
+            try
             {
-                Debug.Log("[Storage] Successfully try replaced game data to local");
-                data = newData;
+                var _parsed = new GameData();
+                _parsed.SetJson(json);
+                forceVersion = _parsed.Get<MetaStorage>().forceVersion;
+                if (forceVersion < 1)
+                    forceVersion = 1;
                 return true;
             }
+            catch
+            {
+                return false;
+            }
+        }
 
-            Debug.Log("[Storage] Try replace failed: new game data is older or equal to local data");
+        public static bool TryParseCloudData(string json, out DateTime cloudLastSave)
+        {
+            cloudLastSave = default;
+
+            if (!IsValidCloudJson(json))
+                return false;
+
+            try
+            {
+                var _parsed = new GameData();
+                _parsed.SetJson(json);
+                cloudLastSave = _parsed.Get<MetaStorage>().lastSave;
+                return true;
+            }
+            catch (Exception _e)
+            {
+                Debug.LogWarning($"[Storage] Failed to parse cloud data: {_e.Message}");
+                return false;
+            }
+        }
+
+        public static bool ApplyCloudData(string json)
+        {
+            if (!IsValidCloudJson(json))
+                return false;
+
+            try
+            {
+                var _parsed = new GameData();
+                _parsed.SetJson(json);
+
+                if (_parsed.Get<MetaStorage>().lastSave == default)
+                    return false;
+
+                return ApplyParsedCloudData(_parsed);
+            }
+            catch (Exception _e)
+            {
+                Debug.LogWarning($"[Storage] Apply cloud failed, keep local: {_e.Message}");
+                return false;
+            }
+        }
+
+        public static bool ApplyForceCloudData(string json)
+        {
+            if (!IsValidCloudJson(json))
+                return false;
+
+            try
+            {
+                var _parsed = new GameData();
+                _parsed.SetJson(json);
+                return ApplyParsedCloudData(_parsed);
+            }
+            catch (Exception _e)
+            {
+                Debug.LogWarning($"[Storage] Force apply cloud failed, keep local: {_e.Message}");
+                return false;
+            }
+        }
+
+        private static bool ApplyParsedCloudData(GameData parsed)
+        {
+            if (parsed == null)
+                return false;
+
+            lock (saveLock)
+            {
+                data = parsed;
+                PersistLocalInternal();
+            }
+
+            loadedFromDisk = true;
+            return true;
+        }
+
+        public static bool TryReplace(string json)
+        {
+            if (!TryParseCloudData(json, out var _cloudLast))
+            {
+                Debug.LogWarning("[Storage] Cloud json invalid, keep local.");
+                return false;
+            }
+
+            var _localLast = GetLocalLastSave();
+
+            if (_cloudLast > _localLast)
+                return ApplyCloudData(json);
+
+            Debug.Log($"[Storage] Keep local data (cloud={_cloudLast:O}, local={_localLast:O}).");
             return false;
         }
 
@@ -99,8 +320,18 @@ namespace Moimo.Modules
         {
             if (string.IsNullOrEmpty(json)) return;
 
-            data.SetJson(json);
-            Debug.Log("[Storage] Successfully replaced game data to local");
+            lock (saveLock)
+            {
+                data.SetJson(json);
+                PersistLocalInternal();
+            }
+
+            loadedFromDisk = true;
+
+#if SUPABASE
+            SupabaseManager.MarkDirty();
+#endif
+            Debug.Log("[Storage] Successfully force-replaced game data to local");
         }
     }
 }

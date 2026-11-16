@@ -10,7 +10,7 @@ namespace Moimo
 
         public override void OnDefault()
         {
-            var _setting = GAME.GetSO<PackSetting>();
+            var _setting = SO.Get<PackSetting>();
             language = string.IsNullOrEmpty(_setting.language) ? LOCALIZE.GetDefault() : _setting.language;
             fps = _setting.fps;
         }

@@ -7,22 +7,19 @@ using Object = UnityEngine.Object;
 
 namespace Moimo.Modules
 {
-    public static class OBJECT
+    public static partial class OBJECT
     {
         public static readonly Dictionary<Type, ObjectBehaviour> Active = new();
-        public static readonly Dictionary<Type, ObjectBehaviour> Resources = new();
+        public static Dictionary<string, ObjectBehaviour> Resources;
 
         public static void Initialize()
         {
-            var _objs = UnityEngine.Resources.LoadAll<ObjectBehaviour>("");
-
-            foreach (var _obj in _objs)
-                Resources.Add(_obj.GetType(), _obj);
+            Resources = SO.Get<PackLibrary>().objectResources;
         }
 
         public static T Show<T>(Transform parent = null) where T : ObjectBehaviour
         {
-            var _prefab = (T)Resources[typeof(T)];
+            var _prefab = (T)Resources[typeof(T).AssemblyQualifiedName];
             return Show(_prefab, parent);
         }
 
@@ -98,12 +95,13 @@ namespace Moimo.Modules
                 Active.Remove(obj.GetType());
             }
 
+            if (obj == null) return;
             Object.Destroy(obj.gameObject);
         }
         
         public static bool IsActive<T>() where T : ObjectBehaviour
         {
-            return Resources.ContainsKey(typeof(T)) && 
+            return Resources.ContainsKey(typeof(T).AssemblyQualifiedName) && 
                    Active.ContainsKey(typeof(T));
         }
 

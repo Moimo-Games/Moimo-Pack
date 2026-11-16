@@ -41,7 +41,7 @@ namespace Moimo.Core
             if (SceneManager.GetActiveScene().buildIndex != 0)
             {
                 Debug.Log($"{nameof(Moimo)}: Create Manager");
-                Instantiate(Resources.Load<GameManager>("GameManager"));
+                Instantiate(SO.Get<PackLibrary>().gameManager);
             }
         }
         #endif
@@ -71,7 +71,9 @@ namespace Moimo.Core
             else
                 yield return GAME.Initialize();
 
-            var _setting = GAME.GetSO<PackSetting>();
+            GAME.HasBooting = true;
+            
+            var _setting = SO.Get<PackSetting>();
             yield return _setting.FirstScene();
 
             if (_popup != null)

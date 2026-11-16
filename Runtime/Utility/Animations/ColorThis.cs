@@ -3,6 +3,7 @@ using Moimo.Utility;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.UI;
+using Color = UnityEngine.Color;
 
 namespace Moimo.Animation
 {

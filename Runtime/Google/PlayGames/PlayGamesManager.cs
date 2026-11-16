@@ -20,7 +20,7 @@ namespace Moimo.Google
         [Obsolete("Obsolete")]
         public override IEnumerator InitializeCoroutine()
         {
-            if (!GAME.GetSO<PackSetting>().isGoogle) yield break;
+            if (!SO.Get<PackSetting>().isGoogle) yield break;
             PlayGamesPlatform.Activate();
             
             var _isCompleted = false;

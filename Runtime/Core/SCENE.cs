@@ -71,22 +71,47 @@ namespace Moimo.Core
 
         public static void LoadWithFade(string sceneName, LoadSceneSetting setting)
         {
+            GAME.Manager.StartCoroutine(LoadWithFadeCoroutine(sceneName, setting));
+        }
+        public static void LoadWithFade(string sceneName, BlackscreenType enter, BlackscreenType exit)
+        {
+            var _setting = new LoadSceneSetting();
+            _setting.enter = enter;
+            _setting.exit = exit;
+            LoadWithFade(sceneName, _setting);
+        }
+
+        public static IEnumerator LoadWithFadeCoroutine(string sceneName, LoadSceneSetting setting)
+        {
             if (setting == null) setting = new LoadSceneSetting();
-            
-            var _onComplete = setting.onComplete;
-            var _popup = OBJECT.Show<BlackscreenPopup>();
-            _popup.In(setting.fadeInInstant, () =>
+
+            BlackscreenPopup _popup = null;
+            if (setting.enter != BlackscreenType.None || setting.exit != BlackscreenType.None)
             {
-                setting.onComplete = () =>
-                {
-                    _popup.Out(setting.fadeOutInstant, () =>
-                    {
-                        _popup.Remove();
-                        _onComplete?.Invoke();
-                    });
-                };
-                Load(sceneName, setting);
-            });
+                _popup = OBJECT.Show<BlackscreenPopup>();
+            }
+
+            if (setting.enter != BlackscreenType.None)
+            {
+                yield return _popup.InCoroutine(setting.enter == BlackscreenType.Instant);
+            }
+            
+            yield return LoadCoroutine(sceneName, setting);
+            
+            if (setting.exit != BlackscreenType.None)
+            {
+                yield return _popup.OutCoroutine(setting.exit == BlackscreenType.Instant);
+            }
+            
+            setting.onComplete?.Invoke();
+        }
+
+        public static IEnumerator LoadWithFadeCoroutine(string sceneName, BlackscreenType enter, BlackscreenType exit)
+        {
+            var _setting = new LoadSceneSetting();
+            _setting.enter = enter;
+            _setting.exit = exit;
+            yield return LoadWithFadeCoroutine(sceneName, _setting);
         }
         
         public static IEnumerator LoadCoroutine(string sceneName)

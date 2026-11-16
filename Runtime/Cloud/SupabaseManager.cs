@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Moimo.Core;
 using Moimo.Modules;
@@ -15,8 +16,153 @@ namespace Moimo.Cloud
     {
         public static Client Client { get; private set; }
 
+        public static bool IsEnabled
+        {
+            get
+            {
+                var _pack = SO.Get<PackSetting>();
+                return _pack != null && _pack.isSupabase;
+            }
+        }
+
+        private static bool cloudDirty;
+        private static CancellationTokenSource cloudCts;
+        private static int cloudSaveVersion;
+        private static readonly SemaphoreSlim cloudUpsertGate = new(1, 1);
+
+        public static void MarkDirty()
+        {
+            if (!IsEnabled)
+                return;
+
+            cloudDirty = true;
+        }
+
+        public static void ClearDirty()
+        {
+            cloudDirty = false;
+        }
+
+        public static void SaveCloud()
+        {
+            if (!IsEnabled)
+                return;
+
+            var _json = STORAGE.GetJson();
+            var _version = Interlocked.Increment(ref cloudSaveVersion);
+
+            var _cts = new CancellationTokenSource();
+            var _old = Interlocked.Exchange(ref cloudCts, _cts);
+            try
+            {
+                _old?.Cancel();
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+            finally
+            {
+                _old?.Dispose();
+            }
+
+            _ = SaveCloudSafe(_version, _json, _cts.Token);
+        }
+
+        public static void SaveCloudIfDirty()
+        {
+            if (!cloudDirty)
+                return;
+
+            SaveCloud();
+        }
+
+        private static bool IsCurrent(int version, CancellationToken token)
+        {
+            return !token.IsCancellationRequested && version == Volatile.Read(ref cloudSaveVersion);
+        }
+
+        private static async Task SaveCloudSafe(int version, string gameData, CancellationToken token)
+        {
+            try
+            {
+                if (!IsCurrent(version, token))
+                    return;
+
+                if (Client == null)
+                {
+                    if (IsCurrent(version, token))
+                        Debug.LogWarning("[Supabase] Cloud save skipped: client is not initialized.");
+                    return;
+                }
+
+                if (!await NETWORK.IsConnection())
+                {
+                    if (IsCurrent(version, token))
+                        Debug.LogWarning("[Supabase] Cloud save skipped: no internet connection.");
+                    return;
+                }
+
+                if (!IsCurrent(version, token))
+                    return;
+
+                var _user = Client.Auth.CurrentUser;
+                if (_user == null)
+                {
+                    if (IsCurrent(version, token))
+                        Debug.LogWarning("[Supabase] Cloud save skipped: user is not authenticated.");
+                    return;
+                }
+
+                await cloudUpsertGate.WaitAsync(token);
+
+                try
+                {
+                    if (!IsCurrent(version, token))
+                        return;
+
+                    Debug.Log("[Supabase] Saving game data...");
+
+                    await Client
+                        .From<GameDatabase>()
+                        .Upsert(new GameDatabase
+                        {
+                            Id = _user.Id,
+                            GameData = gameData
+                        });
+
+                    if (!IsCurrent(version, token))
+                        return;
+
+                    cloudDirty = false;
+                    Debug.Log("[Supabase] Game data saved successfully.");
+                }
+                finally
+                {
+                    cloudUpsertGate.Release();
+                }
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+            catch (Exception _e)
+            {
+                if (IsCurrent(version, token))
+                    Debug.LogWarning($"[Supabase] Cloud save skipped: {_e.Message}");
+            }
+        }
+
         public override async Task InitializeAsync()
         {
+            if (!IsEnabled)
+            {
+                Client = null;
+                Debug.Log("[Supabase] Disabled (isSupabase = false).");
+                return;
+            }
+
             try
             {
                 var _result = await Setup().WithTimeout(5);
@@ -36,7 +182,11 @@ namespace Moimo.Cloud
             {
                 Debug.Log("[Supabase] Initializing...");
 
-                var _setting = GAME.GetSO<PackSetting>()?.supabase;
+                var _pack = SO.Get<PackSetting>();
+                if (_pack == null || !_pack.isSupabase)
+                    return new NetworkResult("Supabase is disabled.");
+
+                var _setting = _pack.supabase;
 
                 if (_setting == null)
                     return new NetworkResult("Supabase settings are null.");
@@ -84,6 +234,9 @@ namespace Moimo.Cloud
         {
             Debug.Log("[Supabase] get game data...");
 
+            if (!IsEnabled)
+                return new NetworkResult<GameDatabase>("Supabase is disabled.");
+
             if (Client == null)
                 return new NetworkResult<GameDatabase>("Supabase client is not initialized.");
 
@@ -109,9 +262,15 @@ namespace Moimo.Cloud
                     return new NetworkResult<GameDatabase>("Game data not found.");
                 }
 
+                var _model = _response.Models[0];
+                if (_model == null || string.IsNullOrEmpty(_model.GameData))
+                {
+                    return new NetworkResult<GameDatabase>("Game data not found.");
+                }
+
                 Debug.Log("[Supabase] Game data get successfully.");
 
-                return new NetworkResult<GameDatabase>(_response.Models[0]);
+                return new NetworkResult<GameDatabase>(_model);
             }
             catch (Exception _e)
             {
@@ -132,6 +291,9 @@ namespace Moimo.Cloud
             string gameData)
         {
             Debug.Log("[Supabase] Saving game data...");
+
+            if (!IsEnabled)
+                return new NetworkResult("Supabase is disabled.");
 
             if (Client == null)
                 return new NetworkResult("Supabase client is not initialized.");
@@ -171,6 +333,9 @@ namespace Moimo.Cloud
         public static async Task<NetworkResult<DateTime>> GetTime()
         {
             Debug.Log("[Supabase] Fetching server time...");
+
+            if (!IsEnabled)
+                return new NetworkResult<DateTime>("Supabase is disabled.");
 
             if (Client == null)
                 return new NetworkResult<DateTime>("Supabase client is not initialized.");

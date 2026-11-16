@@ -1,6 +1,8 @@
+
 using System;
 using Moimo.Core;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace Moimo.Modules
 {
@@ -61,6 +63,37 @@ namespace Moimo.Modules
             });
         }
 
+        public static void PlayLoop(this AssetReferenceT<AudioClip> bgm)
+        {
+            if (bgm == null || !bgm.RuntimeKeyIsValid()) return;
+            if (manager.CurrentBGM == bgm && manager.BGMHandle.IsValid()) return;
+
+            ReleaseBGM();
+
+            manager.CurrentBGM = bgm;
+            manager.BGMHandle = bgm.LoadAssetAsync();
+
+            manager.BGMHandle.Completed += _handle =>
+            {
+                if (manager.CurrentBGM != bgm || !_handle.IsValid()) return;
+                if (_handle.Result == null) return;
+
+                PlayLoop(_handle.Result);
+            };
+        }
+
+        private static void ReleaseBGM()
+        {
+            manager.CurrentBGM = null;
+
+            if (manager.BGMHandle.IsValid())
+            {
+                Addressables.Release(manager.BGMHandle);
+            }
+
+            manager.BGMHandle = default;
+        }
+
         public static void StopLoop(Action onComplete = null)
         {
             var _source = manager.BGMSource;
@@ -83,6 +116,16 @@ namespace Moimo.Modules
         {
             if (clip == null) return;
             manager.SFXSource.PlayOneShot(clip);
+        }
+        
+        public static void PlayOneShot(this AudioClip[] clips)
+        {
+            if (clips == null) return;
+            foreach (var _clip in clips)
+            {
+                if  (_clip == null) continue;
+                manager.SFXSource.PlayOneShot(_clip);
+            }
         }
     }
 }

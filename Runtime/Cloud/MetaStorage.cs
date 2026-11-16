@@ -35,10 +35,16 @@ namespace Moimo.Cloud
         // Gameplay
         public double totalPlayTime;
 
+        // Sync
+        public int forceVersion = 1;
+
+        // Sync
+
         public override void OnDefault()
         {
             base.OnDefault();
             createdAt = DateTime.UtcNow;
+            forceVersion = 1;
         }
 
         public override void OnLoad()

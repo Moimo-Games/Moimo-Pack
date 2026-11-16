@@ -15,7 +15,7 @@ namespace Moimo.Google
 
         public override void Initialize()
         {
-            var _setting = GAME.GetSO<PackSetting>().google;
+            var _setting = SO.Get<PackSetting>().google;
             if (_setting.noBanner) return;
             
             Request(checkConnection: false);
@@ -63,7 +63,7 @@ namespace Moimo.Google
             
             if (!checkConnection || await NETWORK.IsConnection())
             {
-                var _setting = GAME.GetSO<PackSetting>().google;
+                var _setting = SO.Get<PackSetting>().google;
                 data = new BannerView(_setting.bannerID, AdSize.Banner, AdPosition.Top);
                 data.OnBannerAdLoaded += BannerAdLoaded;
             

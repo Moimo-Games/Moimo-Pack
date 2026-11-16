@@ -6,10 +6,10 @@ namespace Moimo.Utility
 {
     public static class LeanTweenExtensions
     {
-        public static LTDescr LeanColor(this Image image, Color to, float time)
+        public static LTDescr LeanColor(this Image image, UnityEngine.Color to, float time)
         {
             return LeanTween.value(image.gameObject, image.color, to, time)
-                .setOnUpdate((Color c) => { image.color = c; });
+                .setOnUpdate((UnityEngine.Color c) => { image.color = c; });
         }
         
         public static LTDescr LeanNumber(this GameObject gameObject, int from, int to, 

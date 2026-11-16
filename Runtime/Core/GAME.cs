@@ -10,6 +10,7 @@ namespace Moimo.Core
 {
     public static class GAME
     {
+        public static bool HasBooting;
         public static GameManager Manager { get; internal set; }
 
         private static Dictionary<Type, GlobalBehaviour> globals;
@@ -142,28 +143,6 @@ namespace Moimo.Core
         public static T Get<T>() where T : class, IBehaviour
         {
             return TryGet<T>(out var _behaviour) ? _behaviour : null;
-        }
-        
-        public static T GetSO<T>() where T : ScriptableObjectAuto
-        {
-            return ScriptableObjectUtility.GetSO<T>();
-        }
-        
-        public static List<T> GetAllSO<T>() where T : ScriptableObjectAuto
-        {
-            return ScriptableObjectUtility.GetAllSO<T>();
-        }
-        
-        public static bool TryGetSO<T>(out T so) where T : ScriptableObjectAuto
-        {
-            so = ScriptableObjectUtility.GetSO<T>();
-            return so != null;
-        }
-
-        public static bool TryGetAllSO<T>(out List<T> so) where T : ScriptableObjectAuto
-        {
-            so = ScriptableObjectUtility.GetAllSO<T>();
-            return so != null;
         }
         
         public static void Quit()

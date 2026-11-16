@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using Moimo.Animation;
 using UnityEngine;
 
@@ -18,11 +19,33 @@ namespace Moimo.Modules
         {
             fade.Set(0, 1, instant, onComplete);
         }
-    
+
         public void Out(bool instant = false, Action onComplete = null)
         {
             onComplete += Remove;
             fade.Set(1, 0, instant, onComplete);
+        }
+
+        public IEnumerator FadeCoroutine(FadeType type, bool instant = false)
+        {
+            if (type == FadeType.In) yield return InCoroutine(instant);
+            else yield return OutCoroutine(instant);
+        }
+
+        public IEnumerator InCoroutine(bool instant = false)
+        {
+            var _complete = false;
+            In(instant, () => _complete = true);
+
+            while (!_complete) yield return null;
+        }
+
+        public IEnumerator OutCoroutine(bool instant = false)
+        {
+            var _complete = false;
+            Out(instant, () => _complete = true);
+
+            while (!_complete) yield return null;
         }
     }
 }
