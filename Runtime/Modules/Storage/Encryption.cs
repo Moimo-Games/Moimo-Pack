@@ -35,14 +35,21 @@ namespace Moimo.Modules
 
         public static string Decrypt(byte[] encrypt)
         {
+            if (encrypt == null || encrypt.Length == 0)
+                return null;
+
             using (Aes _aes = Aes.Create())
             {
+                int _ivLength = _aes.BlockSize / 8;
+                if (encrypt.Length <= _ivLength)
+                    return null;
+
                 byte[] _keyBytes = Encoding.UTF8.GetBytes(Key);
                 Array.Resize(ref _keyBytes, _aes.KeySize / 8);
 
                 _aes.Key = _keyBytes;
 
-                byte[] _iv = new byte[_aes.BlockSize / 8];
+                byte[] _iv = new byte[_ivLength];
                 Array.Copy(encrypt, _iv, _iv.Length);
 
                 using (var _decryptor = _aes.CreateDecryptor(_aes.Key, _iv))

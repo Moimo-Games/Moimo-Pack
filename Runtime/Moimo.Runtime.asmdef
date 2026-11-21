@@ -10,7 +10,9 @@
         "Unity.ResourceManager",
         "Sirenix.OdinInspector",
         "LeanTween",
-        "Google.Play.Games"
+        "Google.Play.Games",
+        "Google.Play.AppUpdate",
+        "Google.Play.Common"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

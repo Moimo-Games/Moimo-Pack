@@ -16,7 +16,12 @@ namespace Moimo.Modules
         {
             TypeNameHandling = TypeNameHandling.Auto,
             MissingMemberHandling = MissingMemberHandling.Ignore,
-            NullValueHandling = NullValueHandling.Ignore
+            NullValueHandling = NullValueHandling.Ignore,
+            Error = (sender, args) =>
+            {
+                Debug.LogWarning($"[Storage] Field skip {args.ErrorContext.Path}: {args.ErrorContext.Error.Message}");
+                args.ErrorContext.Handled = true;
+            }
         };
 
         public GameData()
@@ -48,6 +53,16 @@ namespace Moimo.Modules
             try
             {
                 var _raw = JsonConvert.DeserializeObject<Dictionary<string, JToken>>(json, jsonSettings);
+                if (_raw == null)
+                {
+                    foreach (var _storage in storages.Values)
+                    {
+                        _storage.OnDefault();
+                        _storage.OnLoad();
+                    }
+                    return;
+                }
+
                 var _serializer = JsonSerializer.Create(jsonSettings);
 
                 foreach (var _key in storages.Keys.ToArray())
@@ -58,17 +73,17 @@ namespace Moimo.Modules
                         var _matchKey = FindKey(_key, _raw);
                         if (_matchKey != null && _raw.TryGetValue(_matchKey, out var _token) && _token != null && _token.Type != JTokenType.Null)
                         {
-                            var _storage = _token.ToObject(_key, _serializer) as BaseStorage;
-                            if (_storage != null)
+                            var _storage = storages[_key];
+                            using (var _reader = _token.CreateReader())
                             {
-                                storages[_key] = _storage;
-                                _matched = true;
+                                _serializer.Populate(_reader, _storage);
                             }
+                            _matched = true;
                         }
                     }
                     catch (Exception _exInner)
                     {
-                        Debug.LogWarning($"Skip error for storage type {_key.Name}: {_exInner.Message}");
+                        Debug.LogWarning($"[Storage] Skip error for storage type {_key.Name}: {_exInner.Message}");
                     }
 
                     if (!_matched)
@@ -81,7 +96,7 @@ namespace Moimo.Modules
             }
             catch (Exception _ex)
             {
-                Debug.LogWarning($"Failed to load storage data: {_ex.Message}");
+                Debug.LogWarning($"[Storage] Failed to load storage data: {_ex.Message}");
                 foreach (var _storage in storages.Values)
                 {
                     _storage.OnDefault();
