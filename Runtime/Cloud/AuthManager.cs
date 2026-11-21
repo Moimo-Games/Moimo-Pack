@@ -99,7 +99,7 @@ namespace Moimo.Cloud
 
             Debug.Log($"[Auth] Session restore failed: {_result.Error}");
 
-            _result = await LoginGoogleSilent();
+            _result = await LoginGoogleSilent(true);
             if (_result.IsSuccess)
             {
                 Debug.Log("[Auth] Auto login completed (Google silent).");
@@ -108,7 +108,7 @@ namespace Moimo.Cloud
 
             Debug.Log($"[Auth] Google silent failed: {_result.Error}");
 
-            _result = await LoginGoogle();
+            _result = await LoginGoogle(true);
 #endif
             if (_result.IsSuccess)
                 Debug.Log("[Auth] Auto login completed.");
@@ -118,7 +118,7 @@ namespace Moimo.Cloud
             return _result;
         }
 
-        public async Task<NetworkResult> LoginGoogle()
+        public async Task<NetworkResult> LoginGoogle(bool firstLoginNoSession = false)
         {
             if (!SupabaseManager.IsEnabled)
                 return new NetworkResult("Supabase is disabled.");
@@ -158,7 +158,7 @@ namespace Moimo.Cloud
                     return new NetworkResult("Google authentication returned an empty ID token.");
 
                 Debug.Log($"[Auth] Google sign-in succeeded: {_googleUser.Email}");
-                return await LoginWithGoogleIdToken(_googleUser.IdToken);
+                return await LoginWithGoogleIdToken(_googleUser.IdToken, firstLoginNoSession);
             }
             finally
             {
@@ -166,7 +166,7 @@ namespace Moimo.Cloud
             }
         }
 
-        public async Task<NetworkResult> LoginGoogleSilent()
+        public async Task<NetworkResult> LoginGoogleSilent(bool firstLoginNoSession = false)
         {
             if (!SupabaseManager.IsEnabled)
                 return new NetworkResult("Supabase is disabled.");
@@ -205,7 +205,7 @@ namespace Moimo.Cloud
                     return new NetworkResult("Google silent sign-in returned an empty ID token.");
 
                 Debug.Log($"[Auth] Google silent sign-in succeeded: {_googleUser.Email}");
-                return await LoginWithGoogleIdToken(_googleUser.IdToken);
+                return await LoginWithGoogleIdToken(_googleUser.IdToken, firstLoginNoSession);
             }
             finally
             {
@@ -292,7 +292,7 @@ namespace Moimo.Cloud
             }
         }
 
-        private async Task<NetworkResult> LoginWithGoogleIdToken(string idToken)
+        private async Task<NetworkResult> LoginWithGoogleIdToken(string idToken, bool firstLoginNoSession = false)
         {
             if (string.IsNullOrEmpty(idToken))
                 return new NetworkResult("Google ID token is empty.");
@@ -309,7 +309,7 @@ namespace Moimo.Cloud
                     return new NetworkResult("Google authentication succeeded but Supabase user is null.");
 
                 Debug.Log($"[Auth] Supabase Google login succeeded: {_user.Id}");
-                return await CloudDataSync.SyncAfterAuth();
+                return await CloudDataSync.SyncAfterAuth(firstLoginNoSession);
             }
             catch (Exception _e)
             {

@@ -88,7 +88,7 @@ namespace Moimo.Core
         {
             if (pauseStatus)
             {
-                STORAGE.TrySave();
+                STORAGE.TrySaveLocal();
             }
         }
 

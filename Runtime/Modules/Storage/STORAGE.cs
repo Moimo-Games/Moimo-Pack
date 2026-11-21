@@ -24,12 +24,13 @@ namespace Moimo.Modules
 
         public static void Initialize()
         {
+            Debug.LogWarning("[Storage] Initialize");
             Load();
             if (SO.TryGet<PackSetting>(out var _so))
             {
                 autoSave = _so.autoSave;
             }
-            Application.quitting += TrySave;
+            Application.quitting += TrySaveLocal;
         }
 
         private static void Load()
@@ -165,11 +166,11 @@ namespace Moimo.Modules
             }
         }
 
-        public static void TrySave()
+        public static void TrySaveLocal()
         {
             if (autoSave)
             {
-                Save();
+                SaveLocal();
             }
         }
 
