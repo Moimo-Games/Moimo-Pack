@@ -39,16 +39,20 @@ namespace Moimo.Google
             }
 
             var _startUpdateRequest = _appUpdateManager.StartUpdate(_appUpdateInfo, _options);
+
+            _startUpdateRequest.RegisterListener(state =>
+            {
+                Debug.Log($"[AppUpdate] Status: {state.Status}, Error: {state.Error}");
+            });
+
             yield return _startUpdateRequest;
 
-            if (_startUpdateRequest.Error != AppUpdateErrorCode.NoError)
-            {
-                Debug.LogWarning($"[AppUpdate] StartUpdate error: {_startUpdateRequest.Error}");
-            }
+            Debug.Log($"[AppUpdate] Done. Error = {_startUpdateRequest.Error}, IsSuccessful = {_startUpdateRequest.IsSuccessful}");
+            Application.Quit();
 #endif
             yield break;
         }
     }
 }
 
-#endif
+#endif 
